@@ -6,7 +6,8 @@ output:
 ---
 
 ## Loading and preprocessing the data
-```{r echo=TRUE}
+
+```r
 suppressMessages(library(lubridate))
 suppressMessages(library(stringr))
 suppressMessages(library(ggplot2))
@@ -19,7 +20,8 @@ activity <- read.csv('./activity.csv')
 
 The *interval* column of the *activity* data frame is given in the format HHmm, where HH is the hour (i.e. 0 - 23) and mm is the starting minute of each interval (i.e. 0, 5, 10..., 55). In order to clarify, we add a column containing the starting minute of the day (i.e. 0...1435).
 
-```{r echo=TRUE}
+
+```r
 minutes <- substring(activity$interval,
                      nchar(activity$interval) - 2 + 1,
                      nchar(activity$interval))
@@ -30,7 +32,8 @@ activity$minute_of_day <- as.numeric(hours) * 60 + as.numeric(minutes)
 ```
 
 ## What is mean total number of steps taken per day?
-```{r echo=TRUE}
+
+```r
 tot_spd <- tapply(activity$steps, activity$date, sum, na.rm = TRUE)
 tot_spd <- data.frame(as.numeric(ymd(names(tot_spd))), tot_spd)
 names(tot_spd) <- c('numeric_date', 'steps')
@@ -40,9 +43,12 @@ hist(tot_spd$steps, breaks = 20,
      ylab = 'Number of Days', main = '')
 ```
 
+![](PA1_files/figure-html/unnamed-chunk-3-1.png)<!-- -->
+
 Since it does not make sense to take a fraction of a step, the mean and median daily numbers of steps are rounded.
 
-```{r echo=TRUE}
+
+```r
 mean_spd <- round(mean(tot_spd$steps, na.rm = TRUE))
 median_spd <- round(median(tot_spd$steps, na.rm = TRUE))
 
@@ -51,9 +57,14 @@ med_spd <- paste("Median steps per day:", as.character(median_spd))
 cat(paste(mean_spd, med_spd, sep = '\n'))
 ```
 
-## What is the average daily activity pattern?
-```{r echo=TRUE}
+```
+## Mean steps per day: 9354
+## Median steps per day: 10395
+```
 
+## What is the average daily activity pattern?
+
+```r
 ave_spi <- with(activity, aggregate(steps ~ interval + minute_of_day, 
                                     list(interval = interval), 
                                     mean, na.rm = TRUE))
@@ -66,9 +77,12 @@ plot(ave_spi$minute_of_day, ave_spi$steps, type = 's', lwd = 2,
      main ='Average (Over Days) of Number of Steps in Each Interval')
 ```
 
+![](PA1_files/figure-html/unnamed-chunk-5-1.png)<!-- -->
+
 The interval during which the average number of steps is greatest is 
 
-```{r echo=TRUE}
+
+```r
 max_int <- ave_spi[which.max(ave_spi$steps),]
 
 mm <- max_int$minute_of_day%%60
@@ -85,10 +99,16 @@ hh <-
 cat(paste(interval, stps, minute, sep = '\n'))
 ```
 
+```
+## The largest average number of steps occurred during interval number 104
+## During this interval the average number of steps was 206.17
+## This interval began at minute 515 (i.e. 8:35)
+```
+
 ## Imputing missing values
 An examination of data frame *activity* shows that data are only missing for the variable *steps*. One also finds that there are rows with *steps* == 0, so *steps* == NA does not simply indicate that no steps were taken.
-```{r echo=TRUE}
 
+```r
 dates_NA <- sum(is.na(activity$date))
 intervals_NA <- sum(is.na(activity$interval))
 steps_NA <- sum(is.na(activity$steps))
@@ -104,13 +124,23 @@ steps_zero <- paste('Observations with activity$steps == 0: ',
                     as.character(steps_zero))
 
 cat(paste(dates_NA, intervals_NA, steps_NA, steps_zero, sep = '\n'))
+```
 
+```
+## Observations with activity$date == NA:  0
+## Observations with activity$interval == NA:  0
+## Observations with activity$steps == NA:  2304
+## Observations with activity$steps == 0:  11014
+```
+
+```r
 rm(dates_NA, intervals_NA, steps_NA, steps_zero)
 ```
 
 Missing *steps* values will be replaced by the mean number of steps taken during that interval.
 
-```{r echo=TRUE}
+
+```r
 filler <- function(interval, steps){
   if(!is.na(steps))
     result <- c(steps)
@@ -132,9 +162,12 @@ hist(tot_imp_spd$steps, breaks = 20,
      main = '')
 ```
 
+![](PA1_files/figure-html/unnamed-chunk-8-1.png)<!-- -->
+
 Since it does not make sense to take a fraction of a step, the mean and median daily numbers of steps (from imputed data) are rounded.
 
-```{r echo=TRUE}
+
+```r
 mean_spd <- round(mean(tot_imp_spd$steps))
 median_spd <- round(median(tot_imp_spd$steps))
 
@@ -143,8 +176,14 @@ med_spd <- paste("Median steps per day:", as.character(median_spd))
 cat(paste(mean_spd, med_spd, sep = '\n'))
 ```
 
+```
+## Mean steps per day: 10766
+## Median steps per day: 10766
+```
+
 ## Are there differences in activity patterns between weekdays and weekends?
-```{r echo=TRUE}
+
+```r
 weekend <- function(date){
   wkend <- c('Saturday', 'Sunday')
   
@@ -162,4 +201,6 @@ ggplot(ave_imp_spi, aes(interval, steps)) +
   geom_line() + facet_grid(weekend ~ .) + 
   xlab("Minute of the Day") + ylab("Average Number of Steps")
 ```
+
+![](PA1_files/figure-html/unnamed-chunk-10-1.png)<!-- -->
 The pattern of steps looks roughly similar for weekends and weekdays, although there are some clear differences. For example, it seems that the subjects were, on average, noticeably less active between about 5:30 am and 7:00 am on weekends than they were on weekdays.
